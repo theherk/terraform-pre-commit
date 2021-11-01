@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if which terraform >/dev/null
+then
+    files=$(find . -type d -name ".terraform" -prune -o -type f -iname "*.tf")
+    echo "$files" | xargs -L 1 terraform fmt -check > /dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+        for file in $files; do
+            terraform fmt $file
+        done
+        echo "terraform fmt was applied; restage files"
+        exit 1
+    fi
+else
+    echo "terraform required"
+    exit 1
+fi

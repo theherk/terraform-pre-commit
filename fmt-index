@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+if ! which terraform >/dev/null
+then
+    1>&2 echo "terraform not found; skipping formatting"
+    exit 0
+fi
+
+for file in $(git diff --cached --name-only --diff-filter=ACMR | grep ".tf$")
+do
+    git show ":$file" > "$file.tmp.tf"
+    terraform fmt "$file.tmp.tf"
+    hash=$(git hash-object -w "$file.tmp.tf")
+    git update-index --add --cacheinfo 100644 "$hash" "$file"
+    rm "$file.tmp.tf"
+done
+
+if [ ! "$(git diff --cached --name-only)" ]
+then
+    1>&2 echo "no files left after formatting"
+    exit 1
+fi
